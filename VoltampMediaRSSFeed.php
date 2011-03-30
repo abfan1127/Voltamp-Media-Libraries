@@ -74,9 +74,7 @@ class VoltampMediaRSSFeed {
 	    	}
 	    	$this->rss_items = array_values($this->rss_items);
 		}    	
-    	
-    	var_dump($this->rss_items);
-    	
+    	    	
     	$feed_title_done = false;
     	$feed_url_done = false;
     	$feed_description = false;
