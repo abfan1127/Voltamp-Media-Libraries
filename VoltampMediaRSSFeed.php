@@ -14,9 +14,19 @@ class VoltampMediaRSSFeed {
 	private $rss_title = '';
 	private $rss_description = '';
 	private $rss_items = array();
+	private $criteria_array = array();
+	private $strict;
 
-	function __construct($rss_feed_url) {		
-		$rss_feed = file_get_contents($rss_feed_url);
+	function __construct($rss_feed_url,$strict = false)
+	{
+		$this->rss_feed_url = $rss_feed_url;
+		$this->strict = $strict;
+		return;
+	}
+
+	function process() {		
+	
+		$rss_feed = file_get_contents($this->rss_feed_url);
 		
 	    $parser = xml_parser_create();
 	    xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, 0);
@@ -34,14 +44,39 @@ class VoltampMediaRSSFeed {
 	    		$index++;
 	    		while(($values[$index]['type'] != 'close') && ($values[$index]['tag'] != 'item') && ($index < max($tags['channel']))){
 	    			if(array_key_exists('value',$values[$index])){
-		    			$product_array[$values[$index]['tag']] = $values[$index]['value'];
+    					$product_array[$values[$index]['tag']] = $values[$index]['value'];
 		    		}
 	    			$index++;
 	    		}
 	    		$this->add_item($product_array);
 	    	}
     	}
-    	    	
+    	
+    	if(count($this->criteria_array) > 0){
+	    	foreach($this->rss_items as $index => $row)
+	    	{
+	    		foreach($this->criteria_array as $tag => $params){
+	    			foreach($params as $relation => $val){
+		    			if(array_key_exists($tag,$row)){
+		    				switch($relation){
+		    					case '==':	if(!($row[$tag] == $val)) unset($this->rss_items[$index]); break 1;
+		    					case '!=':	if(!($row[$tag] != $val)) unset($this->rss_items[$index]); break 1;
+		    					case '>':	if(!((double)$row[$tag] >  (double)$val)) unset($this->rss_items[$index]); break 1;
+		    					case '>=':	if(!((double)$row[$tag] >= (double)$val)) unset($this->rss_items[$index]); break 1;
+		    					case '<':	if(!((double)$row[$tag] <  (double)$val)) unset($this->rss_items[$index]); break 1;
+		    					case '<=':	if(!((double)$row[$tag] <= (double)$val)) unset($this->rss_items[$index]); break 1;
+		    				}
+		    			} else {
+		    				if($this->strict) unset($this->rss_items[$index]);
+		    			}
+		    		}
+	    		}
+	    	}
+	    	$this->rss_items = array_values($this->rss_items);
+		}    	
+    	
+    	var_dump($this->rss_items);
+    	
     	$feed_title_done = false;
     	$feed_url_done = false;
     	$feed_description = false;
@@ -60,6 +95,11 @@ class VoltampMediaRSSFeed {
     			$index++;
     		}
     	}
+	}
+	
+	function add_criteria($tag,$relation,$val)
+	{
+		$this->criteria_array[$tag][$relation] = $val;
 	}
 	
 	function add_item($item_data){
