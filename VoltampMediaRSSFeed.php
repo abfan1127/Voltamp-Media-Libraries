@@ -43,8 +43,11 @@ class VoltampMediaRSSFeed {
 	    		$product_array = array();
 	    		$index++;
 	    		while(($values[$index]['type'] != 'close') && ($values[$index]['tag'] != 'item') && ($index < max($tags['channel']))){
+	    			
 	    			if(array_key_exists('value',$values[$index])){
     					$product_array[$values[$index]['tag']] = $values[$index]['value'];
+		    		} else if(array_key_exists('attributes',$values[$index])) {
+		    			$product_array[$values[$index]['tag']] = $values[$index]['attributes'];
 		    		}
 	    			$index++;
 	    		}
